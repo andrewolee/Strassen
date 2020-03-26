@@ -148,6 +148,10 @@ void strassen (int n, int A[][n], int B[][n], int C[][n]) {
 }
 
 int main (int argc, char* argv[]) {
+
+    if (argc != 4) {
+        return -1;
+    }
     
     int n = atoi(argv[2]);
     char* file = argv[3];
@@ -161,13 +165,13 @@ int main (int argc, char* argv[]) {
     char buf[BUFFER_SIZE];
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            fgets(buf, BUFFER_SIZE, fp);
+            assert(fgets(buf, BUFFER_SIZE, fp) != NULL);
             A[i][j] = atoi(buf);
         }
     }
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            fgets(buf, BUFFER_SIZE, fp);
+            assert(fgets(buf, BUFFER_SIZE, fp) != NULL);
             B[i][j] = atoi(buf);
         }
     }
