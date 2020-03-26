@@ -171,7 +171,7 @@ int main (int argc, char* argv[]) {
     }
     fclose(fp);
 
-    strassen(A, B, C);
+    strassen(n, A, B, C);
     print(n, C);
     /*
     int n = 3;
