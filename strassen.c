@@ -152,7 +152,9 @@ int main (int argc, char* argv[]) {
     int n = atoi(argv[2]);
     char* file = argv[3];
 
-    int A[n][n], B[n][n], C[n][n];
+    int (*A)[n] = malloc(sizeof(int*) * n * n);
+    int (*B)[n] = malloc(sizeof(int*) * n * n);
+    int (*C)[n] = malloc(sizeof(int*) * n * n);
 
     // Read in file, and fill matrices A and B
     FILE* fp = fopen(file, "r");
