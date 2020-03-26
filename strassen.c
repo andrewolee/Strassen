@@ -72,7 +72,7 @@ void stitch_cpy (int n_a, int A[][n_a], int n_b, int B[][n_b], int i_b, int j_b)
 }
 
 void strassen (int n, int A[][n], int B[][n], int C[][n]) {
-    if (n < 2) {
+    if (n < 30) {
         standard(n, A, B, C);
         return;
     }
