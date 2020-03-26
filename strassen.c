@@ -175,20 +175,8 @@ int main (int argc, char* argv[]) {
 
     strassen(n, A, B, C);
     print(n, C);
-    /*
-    int n = 3;
-    int A[3][3] = {{1,2,3},{5,6,7},{9,10,11}};
-    int B[3][3] = {{1,2,2},{3,4,7},{2,4,5}};
-    int C[n][n];
 
-    print_full(n, A);
-    print_full(n, B);
-
-    strassen(n, A, B, C);
-    printf("Strassen\n");
-    print_full(n, C);
-
-    standard(n, A, B, C);
-    printf("Standard\n");
-    print_full(n, C);*/
+    free(A);
+    free(B);
+    free(C);
 }
