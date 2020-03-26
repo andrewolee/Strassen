@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
+#define N_0 30
 #define BUFFER_SIZE 40
 
 void print (int n, int A[][n]) {
@@ -72,7 +74,7 @@ void stitch_cpy (int n_a, int A[][n_a], int n_b, int B[][n_b], int i_b, int j_b)
 }
 
 void strassen (int n, int A[][n], int B[][n], int C[][n]) {
-    if (n < 30) {
+    if (n < N_0) {
         standard(n, A, B, C);
         return;
     }
