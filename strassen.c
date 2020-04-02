@@ -2,16 +2,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/time.h>
 
-#define N_0 30
+#define N_0 512 // Crossover point
 #define BUFFER_SIZE 40
 
+// Print diagonal of matrix
 void print (int n, int A[][n]) {
     for (int i = 0; i < n; i++) {
         printf("%i\n", A[i][i]);
     }
 }
 
+// Print full matrix
 void print_full (int n, int A[][n]) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -33,6 +36,7 @@ void standard (int n, int A[][n], int B[][n], int C[][n]) {
     }
 }
 
+// Helpers for Strassen's
 void add (int n, int A[][n], int B[][n], int C[][n]) {
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
@@ -74,59 +78,61 @@ void stitch_cpy (int n_a, int A[][n_a], int n_b, int B[][n_b], int i_b, int j_b)
 }
 
 void strassen (int n, int A[][n], int B[][n], int C[][n]) {
-    if (n < N_0) {
+    if (n <= N_0) {
         standard(n, A, B, C);
         return;
     }
 
     int m = (n + 1) / 2;
 
-    int a[m][m], b[m][m], c[m][m], d[m][m], e[m][m], f[m][m], g[m][m], h[m][m];
+    int (*M)[m][m] = malloc(sizeof(int) * 8 * m * m);
+    
+    split_cpy(n, A, 0, 0, m, M[0]);
+    split_cpy(n, A, 0, m, m, M[1]);
+    split_cpy(n, A, m, 0, m, M[2]);
+    split_cpy(n, A, m, m, m, M[3]);
 
-    split_cpy(n, A, 0, 0, m, a);
-    split_cpy(n, A, 0, m, m, b);
-    split_cpy(n, A, m, 0, m, c);
-    split_cpy(n, A, m, m, m, d);
-
-    split_cpy(n, B, 0, 0, m, e);
-    split_cpy(n, B, 0, m, m, f);
-    split_cpy(n, B, m, 0, m, g);
-    split_cpy(n, B, m, m, m, h);
+    split_cpy(n, B, 0, 0, m, M[4]);
+    split_cpy(n, B, 0, m, m, M[5]);
+    split_cpy(n, B, m, 0, m, M[6]);
+    split_cpy(n, B, m, m, m, M[7]);
 
 
-    int P[7][m][m];
+    int (*P)[m][m] = malloc(sizeof(int) * 7 * m * m);
     int temp[2][m][m];
 
     // P1 = A(F - H)
-    sub(m, f, h, temp[0]);
-    strassen(m, a, temp[0], P[0]);
+    sub(m, M[5], M[7], temp[0]);
+    strassen(m, M[0], temp[0], P[0]);
 
     // P2 = (A + B)H
-    add(m, a, b, temp[0]);
-    strassen(m, temp[0], h, P[1]);
+    add(m, M[0], M[1], temp[0]);
+    strassen(m, temp[0], M[7], P[1]);
 
     // P3 = (C + D)E
-    add(m, c, d, temp[0]);
-    strassen(m, temp[0], e, P[2]);
+    add(m, M[2], M[3], temp[0]);
+    strassen(m, temp[0], M[4], P[2]);
 
     // P4 = D(G - E)
-    sub(m, g, e, temp[0]);
-    strassen(m, d, temp[0], P[3]);
+    sub(m, M[6], M[4], temp[0]);
+    strassen(m, M[3], temp[0], P[3]);
 
     // P5 = (A + D)(E + H)
-    add(m, a, d, temp[0]);
-    add(m, e, h, temp[1]);
+    add(m, M[0], M[3], temp[0]);
+    add(m, M[4], M[7], temp[1]);
     strassen(m, temp[0], temp[1], P[4]);
 
     // P6 = (B - D)(G + H)
-    sub(m, b, d, temp[0]);
-    add(m, g, h, temp[1]);
+    sub(m, M[1], M[3], temp[0]);
+    add(m, M[6], M[7], temp[1]);
     strassen(m, temp[0], temp[1], P[5]);
 
     // P7 = (A - C)(E + F)
-    sub(m, a, c, temp[0]);
-    add(m, e, f, temp[1]);
+    sub(m, M[0], M[2], temp[0]);
+    add(m, M[4], M[5], temp[1]);
     strassen(m, temp[0], temp[1], P[6]);
+
+    free(M);
 
     // AE + BG
     add(m, P[4], P[3], temp[0]);
@@ -147,9 +153,27 @@ void strassen (int n, int A[][n], int B[][n], int C[][n]) {
     sub(m, temp[0], P[2], temp[1]);
     sub(m, temp[1], P[6], temp[0]);
     stitch_cpy(m, temp[0], n, C, m, m);
+
+    free(P);
+}
+
+// Timing functions
+void start_time(struct timeval *start) {
+    gettimeofday(start, NULL); 
+}
+
+void stop_time(struct timeval *stop) {
+    gettimeofday(stop, NULL);
+}
+
+void print_time(struct timeval start, struct timeval stop) {
+    double secs = (double)(stop.tv_usec - start.tv_usec) / 1000000 + 
+        (double)(stop.tv_sec - start.tv_sec); 
+    printf("%f seconds\n", secs);
 }
 
 int main (int argc, char* argv[]) {
+    int mode = atoi(argv[1]);
 
     if (argc != 4) {
         return -1;
@@ -158,9 +182,9 @@ int main (int argc, char* argv[]) {
     int n = atoi(argv[2]);
     char* file = argv[3];
 
-    int (*A)[n] = malloc(sizeof(int*) * n * n);
-    int (*B)[n] = malloc(sizeof(int*) * n * n);
-    int (*C)[n] = malloc(sizeof(int*) * n * n);
+    int (*A)[n] = malloc(sizeof(int) * n * n);
+    int (*B)[n] = malloc(sizeof(int) * n * n);
+    int (*C)[n] = malloc(sizeof(int) * n * n);
 
     // Read in file, and fill matrices A and B
     FILE* fp = fopen(file, "r");
@@ -179,8 +203,40 @@ int main (int argc, char* argv[]) {
     }
     fclose(fp);
 
-    strassen(n, A, B, C);
-    print(n, C);
+    switch (mode) {
+        case 0: {
+            strassen(n, A, B, C);
+            print(n, C);
+            break;
+        }
+        case 1: {
+            struct timeval start, stop;
+            /*
+            start_time(&start);
+            standard(n, A, B, C);
+            stop_time(&stop);
+            printf("Standard Algorithm: ");
+            print_time(start, stop);*/
+
+            start_time(&start);
+            strassen(n, A, B, C);
+            stop_time(&stop);
+            printf("n_0 %i: ", N_0);
+            print_time(start, stop);
+            break;
+        }
+        case 2: {
+            strassen(n, A, B, C);
+            strassen(n, B, C, A);
+            int triangles = 0;
+            for (int i = 0; i < n; i++) {
+                triangles += A[i][i];
+            }
+            triangles /= 6;
+            printf("%i Triangles\n", triangles);
+        }
+    }
+    
 
     free(A);
     free(B);
