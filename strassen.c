@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <sys/time.h>
 
-#define N_0 512 // Crossover point
+#define N_0 1 // Crossover point
 #define BUFFER_SIZE 40
 
 // Print diagonal of matrix
